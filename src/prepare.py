@@ -1,5 +1,6 @@
 """Day 2 · steps 2.3–2.5 — build the arrays every method will use."""
 from pathlib import Path
+import pickle
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -56,3 +57,10 @@ print("2.4b shapes  X_tr", X_tr.shape, " X_val", X_val.shape, " X_fit", X_fit.sh
 print(f"     attack share  y_tr {y_tr.mean():.4f}  y_val {y_val.mean():.4f}  y_fit {y_fit.mean():.4f}")
 print(f"2.4c range  X_tr [{X_tr.min():.2f}, {X_tr.max():.2f}]  X_val [{X_val.min():.2f}, {X_val.max():.2f}]"
       f"  X_test [{X_test.min():.2f}, {X_test.max():.2f}]")
+
+# 2.5 Save: every later script loads this one file, so all methods see identical data
+OUT = DATA.parent / "prepared.pkl"
+with open(OUT, "wb") as f:
+    pickle.dump(dict(X_fit=X_fit, y_fit=y_fit, X_val=X_val, y_val=y_val, X_tr=X_tr, y_tr=y_tr,
+                     X_test=X_test, y_test=y_test, groups=groups, features=features), f)
+print(f"2.5 saved {OUT} ({OUT.stat().st_size / 1e6:.0f} MB)")
