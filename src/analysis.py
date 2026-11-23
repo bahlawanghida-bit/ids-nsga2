@@ -30,6 +30,10 @@ for m, rs in runs.items():                                         # never analy
 feas = {m: sum(feasible(r) for r in rs) for m, rs in runs.items()}
 lowest_fpr = {m: float(min(r["fpr"].min() if len(r["fpr"]) else r.get("best_fpr_reached", np.nan) for r in rs))
               for m, rs in runs.items()}
+# Post hoc (added after seeing results): A's only feasible solutions were "detect-nothing" trees (F1 = 0),
+# so feasibility is also reported for usable detectors, with the F1 >= 0.5 threshold of the selection rule.
+useful = {m: sum(bool(len(r["F"]) and np.any((r["fpr"] <= FPR_MAX + 1e-12) & (1 - r["F"][:, 0] >= 0.5)))
+                 for r in rs) for m, rs in runs.items()}
 
 # 8.2 Hypervolume: ONE normalization over all B and C fronts, reference point 1.1, empty front -> 0
 REF = 1.1
@@ -57,10 +61,19 @@ sentence = (f"C's hypervolume was higher than B's in {wins} of {len(HVs['C'])} r
             f"(one-sided Mann-Whitney U = {test.statistic:.0f}, p = {test.pvalue:.4f}, A12 = {a12:.2f}).")
 print(sentence)
 
+# Post hoc sensitivity check: the same test with every F1 < 0.5 solution removed from the fronts
+HVu = {m: np.array([hv_of(r["F"][1 - r["F"][:, 0] >= 0.5]) if len(r["F"]) else 0.0 for r in runs[m]]) for m in "BC"}
+sens = mannwhitneyu(HVu["C"], HVu["B"], alternative="greater")
+sens_a12 = sens.statistic / (len(HVu["C"]) * len(HVu["B"]))
+sens_wins = int(sum(c > b for c, b in zip(HVu["C"], HVu["B"])))
+print(f"Sensitivity (fronts without F1 < 0.5): C > B in {sens_wins} of 10, p = {sens.pvalue:.4f}, A12 = {sens_a12:.2f}; "
+      f"HV mean C {HVu['C'].mean():.4f}, B {HVu['B'].mean():.4f}")
+
 # 8.5 Table 2
 rows = []
 for m in ["A", "GA", "B", "C"]:
-    row = {"method": m, "feasible runs": f"{feas[m]} of {len(runs[m])}", "lowest FPR": round(lowest_fpr[m], 4)}
+    row = {"method": m, "feasible runs": f"{feas[m]} of {len(runs[m])}",
+           "feasible runs, F1 >= 0.5 (post hoc)": f"{useful[m]} of {len(runs[m])}", "lowest FPR": round(lowest_fpr[m], 4)}
     if m in HVs:
         row.update({"HV mean": HVs[m].mean(), "HV std": HVs[m].std(ddof=1), "HV median": np.median(HVs[m])})
     if m == "C":
@@ -154,6 +167,9 @@ freq.to_csv(out_dir / "feature_frequency_front_C.csv")
 
 json.dump({"sentence": sentence, "U": float(test.statistic), "p": float(test.pvalue), "A12": float(a12), "wins": wins,
            "HV": {m: v.tolist() for m, v in HVs.items()}, "feasible_runs": feas, "lowest_fpr": lowest_fpr,
+           "feasible_runs_f1_0.5_post_hoc": useful,
+           "sensitivity_without_f1_below_0.5": {"HV": {m: v.tolist() for m, v in HVu.items()}, "U": float(sens.statistic),
+                                                "p": float(sens.pvalue), "A12": float(sens_a12), "wins": sens_wins},
            "normalization": {"lo": lo.tolist(), "hi": hi.tolist(), "ref": REF},
            "convergence_reaches_B": cross, "B_final_mean_HV": float(b_mean),
            "C_mean_HV_by_generation": mean.tolist(),
