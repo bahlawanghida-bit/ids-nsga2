@@ -1,6 +1,8 @@
 .venv/
 data/
 results/*.pkl
+results/*.claim
+results/tiny/
 __pycache__/
 ~$*
 papers/

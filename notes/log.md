@@ -71,3 +71,39 @@ Problems:   git filter-branch also deleted papers/ from disk -> restored from ba
             GitHub connection unreliable -> repo create and push needed retries
             git push run from AI-Research instead of ids-nsga2 -> "not a git repository"; run git inside ids-nsga2
 Next:       send Dr. May the two-sentence update; Day 3 step 3.1: write score() in src/scoring.py
+
+---
+
+## 2026-11-24 · Days 3–6 (implementation, before the main runs)
+Did:        3.1 score() in src/scoring.py (X arrays loaded as float32: trees cast to float32 anyway, results identical)
+            3.2 filter baselines (src/baselines.py) -> results/baselines_val.csv, figures/baselines_f1_vs_k.png
+            4.1–4.4, 5, 6.1–6.4 IDSProblem, FrontLog, run_nsga2, GA baseline, method B (src/problem.py), runner (src/experiments.py)
+            correctness tests (src/sanity_checks.py) and a dry run with tiny budgets: all passed
+Numbers:    score() on all 42 features, default tree (validation): F1 0.8969 · FPR 0.0934 (= Day 2)
+            one evaluation ~0.20 s on this laptop -> one 5,000-evaluation run ~17 min
+            baselines (validation): best chi2 F1 0.8951 (k=25, FPR 0.0928) · best MI F1 0.8978 (k=30, FPR 0.0889)
+            no baseline meets FPR <= 1% (lowest 0.0889)
+            Test 1: IDSProblem, all genes on, tune=False: F1 0.896857 = baseline exactly
+            Test 2: no features -> F [1, 0, 1e6], G [1, 1] (violated)
+            tiny C run (pop 10, 3 gen): feasible front, settings inside their ranges, lowest FPR 0.0078
+            dry run: every method used exactly its budget (30 = 10 x 3)
+Decisions:  B's Optuna step gets the FPR limit as a constraint (trial.set_constraint), so the sequential competitor
+            is not handicapped against C; the deck's code tuned without it. Scoring is still the same IDSProblem.
+            budget fixed at 5,000 evaluations for every method, whatever the convergence plot shows (equal budgets)
+            machine: AMD Ryzen 5 5600H (6 cores / 12 threads), 15.3 GB RAM, Windows 11 Home; 4 runs in parallel
+Problems:   Optuna 5.0 deprecates constraints_func -> trial.set_constraint
+            same seed can give a slightly different front: time is an objective and timing is noisy (limitation)
+
+### Analysis rules, fixed BEFORE any main result exists
+Feasible run:  at least one final solution with validation FPR <= 1%.
+Hypervolume:   B and C final fronts in (1 - F1, features, ms); ONE min-max normalization over all B and C fronts
+               together; reference point 1.1 on each axis; an empty front has hypervolume 0.
+Test (RQ1):    Mann-Whitney U, one-sided (C > B), alpha 0.05; effect size A12 = U / (10 x 10). One test, no Holm.
+RQ2:           C's hypervolume per generation (same normalization), mean +- 1 std over 10 runs; B's final mean
+               hypervolume as a line; first generation where C's mean reaches it (x 50 = evaluations).
+Selection:     per run, from the validation front only: the knee (solutions with F1 >= 0.5, each objective scaled
+               to 0-1 over that front, smallest distance to the ideal corner) and the best-F1 solution.
+               A: its own knee and best-F1 · GA: its single best · chi2 and MI: best k by validation F1 · all-features tree.
+Test set:      each chosen detector is refit on X_tr, y_tr and evaluated ONCE on X_test; time = median of 10
+               predictions of the whole test set, one process, per connection.
+Figures:       Figure 1 uses, for B and C, the run whose hypervolume is closest to that method's median.
