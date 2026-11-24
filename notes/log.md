@@ -142,3 +142,21 @@ Decisions:  post hoc, reported as such: A's only "feasible" solutions were detec
             sensitivity check of the hypervolume test without F1 < 0.5 solutions. The pre-registered numbers are kept.
 Problems:   none in the runs; test set used exactly once
 Next:       report Sections 6-9 from these numbers; send Dr. May the update
+
+---
+
+## 2026-11-25 · Days 12–13 (checks and package)
+Did:        report drafted in Claude Docs (all sections, Tables 1-3, Figures 1-4, equations, references)
+            12.2 every number in the report recomputed from the result files and raw data (81 checks)
+            13.1 reproducibility check: fresh clone from GitHub, new venv, pip install -r requirements.txt,
+                 every script in README order with tiny budgets
+            13.4 package: Submission_Ghida_Bahlawan/ with Code_Ghida_Bahlawan.zip and the report PDF (draft)
+Numbers:    number check: 81 of 81 match after fixes (6 Table 3 cells were rounded twice from the 4-decimal table;
+            now rounded once from test_eval_runs.csv)
+            repro check: pip install OK, 7 of 7 scripts exit 0, all outputs present;
+            prepared.pkl arrays identical to the original; baseline F1, FPR, precision, recall identical
+            code zip: 37 files, 516 KB, no data, .venv, papers or .pkl
+            report PDF: 16 pages (A4)
+Problems:   the PDF export printed equations as raw LaTeX -> rendered them as images (figures/equations/)
+Next:       verify Section 2 against the papers; complete two references; write the AI-use statement;
+            trim to the course's page limit; presentation slides; final PDF export
