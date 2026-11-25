@@ -155,7 +155,7 @@ Numbers:    number check: 81 of 81 match after fixes (6 Table 3 cells were round
             now rounded once from test_eval_runs.csv)
             repro check: pip install OK, 7 of 7 scripts exit 0, all outputs present;
             prepared.pkl arrays identical to the original; baseline F1, FPR, precision, recall identical
-            code zip: 37 files, 516 KB, no data, .venv, papers or .pkl
+            code zip: 36 files, 517 KB, no data, .venv, papers or .pkl
             report PDF: 16 pages (A4)
 Problems:   the PDF export printed equations as raw LaTeX -> rendered them as images (figures/equations/)
 Next:       verify Section 2 against the papers; complete two references; write the AI-use statement;
